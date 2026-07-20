@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Your Own Household Buddy — Setup Guide</title>
+<style>
+  :root {
+    --paper:#F5F4EF; --surface:#FBFAF6; --panel:#ECEAE1; --ink:#17201E; --muted:#656B60;
+    --primary:#0E6E63; --primary-soft:#0e6e6314; --highlight:#B77A16; --highlight-bg:#e0a0321f;
+    --rule:#DEDCD1; --code-bg:#16211E; --code-ink:#E7EAE2; --code-tok:#6FD0BF; --code-str:#D9B37A;
+    --serif:Charter,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--paper:#10140F;--surface:#171C15;--panel:#1D2420;--ink:#E7E9E1;--muted:#9AA093;
+    --primary:#45B7A6;--primary-soft:#45b7a61a;--highlight:#E6B255;--highlight-bg:#e6b25518;
+    --rule:#2A322C;--code-bg:#0C120F;--code-ink:#E7EAE2;--code-tok:#6FD0BF;--code-str:#E0BE86;}
+  }
+  :root[data-theme="light"]{--paper:#F5F4EF;--surface:#FBFAF6;--panel:#ECEAE1;--ink:#17201E;--muted:#656B60;--primary:#0E6E63;--primary-soft:#0e6e6314;--highlight:#B77A16;--highlight-bg:#e0a0321f;--rule:#DEDCD1;--code-bg:#16211E;--code-ink:#E7EAE2;--code-str:#D9B37A;}
+  :root[data-theme="dark"]{--paper:#10140F;--surface:#171C15;--panel:#1D2420;--ink:#E7E9E1;--muted:#9AA093;--primary:#45B7A6;--primary-soft:#45b7a61a;--highlight:#E6B255;--highlight-bg:#e6b25518;--rule:#2A322C;--code-bg:#0C120F;--code-ink:#E7EAE2;--code-str:#E0BE86;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);
+    font-size:1.14rem;line-height:1.7;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  .wrap{max-width:47rem;margin:0 auto;padding:0 1.5rem 6rem;}
+
+  header.mast{padding:4.5rem 0 2.2rem;border-bottom:1px solid var(--rule);}
+  .eyebrow{font-family:var(--sans);font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--primary);margin:0 0 1.1rem;}
+  h1{font-family:var(--sans);font-weight:800;letter-spacing:-.022em;line-height:1.05;font-size:clamp(2rem,5.5vw,3rem);margin:0 0 1rem;text-wrap:balance;}
+  .dek{font-size:1.26rem;color:var(--muted);margin:0 0 1.6rem;line-height:1.5;text-wrap:pretty;}
+  .meta{font-family:var(--sans);font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:.5rem .9rem;align-items:center;}
+  .chip{font-family:var(--mono);font-size:.74rem;color:var(--primary);background:var(--primary-soft);border:1px solid var(--rule);padding:.18rem .5rem;border-radius:999px;}
+
+  .glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:2.2rem 0;}
+  .glance div{background:var(--surface);padding:1rem 1.1rem;}
+  .glance .n{font-family:var(--sans);font-weight:800;font-size:1.35rem;color:var(--ink);letter-spacing:-.02em;display:block;}
+  .glance .l{font-family:var(--sans);font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.15rem;display:block;}
+
+  section{padding-top:2.6rem;}
+  h2{font-family:var(--sans);font-weight:800;letter-spacing:-.015em;font-size:1.55rem;line-height:1.15;margin:0 0 .3rem;text-wrap:balance;}
+  h3{font-family:var(--sans);font-weight:700;font-size:1.1rem;margin:1.8rem 0 .3rem;letter-spacing:-.01em;}
+  .sec-eyebrow{font-family:var(--mono);font-size:.74rem;color:var(--primary);letter-spacing:.04em;margin:0 0 .7rem;}
+  p{margin:1rem 0;}
+  a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:2px;}
+  strong{font-weight:700;}
+  .lead{font-size:1.2rem;}
+  ul,ol{padding-left:1.2rem;}
+  li{margin:.4rem 0;}
+  hr.soft{border:0;border-top:1px solid var(--rule);margin:3rem 0 0;}
+
+  /* TOC */
+  nav.toc{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.2rem 1.4rem;margin:2.4rem 0;}
+  nav.toc .th{font-family:var(--sans);font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+  nav.toc ol{list-style:none;padding:0;margin:0;counter-reset:toc;display:grid;gap:.15rem;}
+  nav.toc li{margin:0;counter-increment:toc;}
+  nav.toc a{font-family:var(--sans);font-size:.98rem;text-decoration:none;display:flex;gap:.7rem;padding:.28rem 0;align-items:baseline;}
+  nav.toc a::before{content:counter(toc);font-family:var(--mono);font-size:.78rem;color:var(--primary);min-width:1.4rem;text-align:right;}
+  nav.toc a:hover{text-decoration:underline;}
+  nav.toc .opt{color:var(--muted);font-size:.8rem;}
+
+  /* step cards */
+  .step{border:1px solid var(--rule);border-radius:14px;background:var(--surface);padding:1.5rem 1.6rem;margin:1.6rem 0;}
+  .step > h2{display:flex;align-items:baseline;gap:.8rem;}
+  .step .num{font-family:var(--mono);font-size:.85rem;font-weight:700;color:#fff;background:var(--primary);border-radius:8px;padding:.15rem .55rem;line-height:1.3;flex:none;transform:translateY(-2px);}
+  .step p:first-of-type{margin-top:.6rem;}
+
+  code{font-family:var(--mono);font-size:.83em;background:var(--panel);padding:.1rem .35rem;border-radius:5px;border:1px solid var(--rule);word-break:break-word;}
+  pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:1.05rem 1.15rem;margin:1.3rem 0;overflow-x:auto;font-size:.8rem;line-height:1.6;border:1px solid var(--rule);}
+  pre code{background:none;border:0;padding:0;font-size:inherit;color:inherit;word-break:normal;}
+  .cmt{color:#7f8a83;}.kw{color:var(--code-tok);}.str{color:var(--code-str);}
+  .pl{font-family:var(--mono);font-size:.85em;background:var(--highlight-bg);border:1px dashed var(--highlight);color:var(--highlight);padding:.05rem .3rem;border-radius:4px;}
+
+  .callout{background:var(--highlight-bg);border:1px solid var(--rule);border-left:3px solid var(--highlight);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0;font-size:1rem;}
+  .callout .tag{font-family:var(--sans);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--highlight);display:block;margin-bottom:.35rem;}
+  .callout p:first-of-type{margin-top:0;}.callout p:last-child{margin-bottom:0;}
+
+  /* checklist */
+  .check{list-style:none;padding:0;margin:1.3rem 0;display:grid;gap:.55rem;}
+  .check li{display:flex;gap:.7rem;align-items:flex-start;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.7rem .9rem;margin:0;}
+  .check .box{color:var(--primary);font-weight:800;flex:none;font-family:var(--sans);}
+  .check b{font-family:var(--sans);font-size:.98rem;}
+
+  /* pipeline */
+  .pipe{margin:1.6rem 0;display:flex;flex-direction:column;gap:0;}
+  .node{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.7rem .95rem;font-family:var(--sans);}
+  .node .nt{font-weight:700;font-size:.95rem;}.node .nd{font-size:.8rem;color:var(--muted);margin-top:.1rem;}
+  .node.accent{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary-soft);}
+  .arrow{align-self:center;color:var(--muted);font-size:1.05rem;padding:.3rem 0;}
+
+  .tbl{width:100%;border-collapse:collapse;margin:1.3rem 0;font-family:var(--sans);font-size:.92rem;}
+  .tbl th,.tbl td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--rule);}
+  .tbl th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;}
+  .tbl td:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+  footer{margin-top:4rem;padding-top:1.6rem;border-top:1px solid var(--rule);font-family:var(--sans);font-size:.84rem;color:var(--muted);}
+  ::selection{background:var(--highlight);color:#17201E;}
+  a:focus-visible,:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Hands-on Guide · WhatsApp + Claude + Google Cloud</p>
+    <h1>Build your own Household Buddy</h1>
+    <p class="dek">A WhatsApp assistant that turns your family's messages, photos, and school emails into one shared to-do list — and reminds you twice a day. This is the complete, step-by-step build.</p>
+    <div class="meta">
+      <span>Full setup ≈ 2–3 hours</span><span>·</span>
+      <span>~$5/month to run</span>
+      <span class="chip">Node 20+</span><span class="chip">Claude</span><span class="chip">Firestore</span><span class="chip">Cloud Run</span>
+    </div>
+  </header>
+
+  <div class="glance">
+    <div><span class="n">1:1 chats</span><span class="l">private per parent</span></div>
+    <div><span class="n">1 memory</span><span class="l">shared household</span></div>
+    <div><span class="n">2×/day</span><span class="l">reliable digest</span></div>
+    <div><span class="n">Photos too</span><span class="l">notices, invites</span></div>
+  </div>
+
+  <section>
+    <p class="lead">By the end you'll have a bot each parent messages privately on WhatsApp, backed by one shared memory. Either parent can file a task ("Leo's party Saturday 1:30"), snap a photo of a school notice, remove something, or just ask "what's on this week?" — and a scheduled digest lands on both phones every morning and evening.</p>
+    <p>Everything here is real and battle-tested — including the handful of traps that will otherwise cost you an afternoon each. Follow the parts in order.</p>
+  </section>
+
+  <section>
+    <p class="sec-eyebrow">// how it fits together</p>
+    <h2>The architecture, in one glance</h2>
+    <div class="pipe">
+      <div class="node"><span class="nt">WhatsApp → Meta webhook</span><span class="nd">a parent DMs the bot; Meta POSTs the message to your app</span></div>
+      <div class="arrow">↓</div>
+      <div class="node accent"><span class="nt">Express app on Cloud Run</span><span class="nd">acks in &lt;5s, then processes asynchronously</span></div>
+      <div class="arrow">↓</div>
+      <div class="node"><span class="nt">Claude — understand</span><span class="nd">text or photo → add / remove / answer, grounded in the shared state</span></div>
+      <div class="arrow">↓</div>
+      <div class="node accent"><span class="nt">Firestore — shared memory</span><span class="nd">tasks, members, kids, conversation state, keyed by household</span></div>
+      <div class="arrow">↓</div>
+      <div class="node"><span class="nt">Reply → both parents</span><span class="nd">plus a twice-daily digest via an approved template</span></div>
+    </div>
+    <p>The whole app is a handful of small files — one Express server, one module for Claude calls, one for Firestore, one thin WhatsApp wrapper, one message handler, and a boot-time seed. Each has a single job.</p>
+  </section>
+
+  <section>
+    <p class="sec-eyebrow">// before you start</p>
+    <h2>Prerequisites</h2>
+    <ul class="check">
+      <li><span class="box">☐</span><div><b>A Meta (Facebook) account</b> — free. You'll create a developer app with the WhatsApp product. A Meta-provided test number is fine to start.</div></li>
+      <li><span class="box">☐</span><div><b>An Anthropic API key</b> — from <code>console.anthropic.com</code>. Pay-as-you-go; this app costs cents/day.</div></li>
+      <li><span class="box">☐</span><div><b>A Google Cloud project with billing enabled</b> — for Firestore, Cloud Run, and Cloud Scheduler. Comfortably within a few dollars/month.</div></li>
+      <li><span class="box">☐</span><div><b>Local tools</b> — Node 20+, the <code>gcloud</code> CLI (authenticated with <code>gcloud auth login</code>), and <code>git</code>.</div></li>
+    </ul>
+  </section>
+
+  <nav class="toc">
+    <div class="th">The build, in order</div>
+    <ol>
+      <li><a href="#p1">Scaffold the app</a></li>
+      <li><a href="#p2">Get your Claude API key</a></li>
+      <li><a href="#p3">Set up WhatsApp Cloud API</a></li>
+      <li><a href="#p4">Create the Google Cloud project + Firestore</a></li>
+      <li><a href="#p5">Configure &amp; seed your household</a></li>
+      <li><a href="#p6">Deploy to Cloud Run</a></li>
+      <li><a href="#p7">Connect the webhook</a></li>
+      <li><a href="#p8">The twice-daily digest (approved template)</a></li>
+      <li><a href="#p9">Mine school email <span class="opt">— optional</span></a></li>
+    </ol>
+  </nav>
+
+  <section class="step" id="p1">
+    <h2><span class="num">1</span> Scaffold the app</h2>
+    <p>Create a small Node project. The dependencies are deliberately few:</p>
+    <pre><code>mkdir household-buddy &amp;&amp; cd household-buddy
+npm init -y
+npm pkg set type=module
+npm install express @anthropic-ai/sdk @google-cloud/firestore luxon</code></pre>
+    <p>Organise the source into focused files under <code>src/</code>:</p>
+    <table class="tbl">
+      <tr><th>File</th><th>Its one job</th></tr>
+      <tr><td><code>server.js</code></td><td>Express app: the <code>/webhook</code> and <code>/cron/digest</code> routes</td></tr>
+      <tr><td><code>handler.js</code></td><td>What to do with an inbound message (the conversation logic)</td></tr>
+      <tr><td><code>brain.js</code></td><td>Every Claude call — extract tasks, reply, build the digest</td></tr>
+      <tr><td><code>db.js</code></td><td>Firestore reads/writes, all scoped by household</td></tr>
+      <tr><td><code>whatsapp.js</code></td><td>Thin wrapper over Meta's Graph API (send text, send template, fetch media)</td></tr>
+      <tr><td><code>seed.js</code></td><td>Creates your household, parents, and kids on first boot</td></tr>
+    </table>
+    <p>Add start scripts to <code>package.json</code>:</p>
+    <pre><code><span class="str">"scripts"</span>: {
+  <span class="str">"start"</span>: <span class="str">"node --env-file-if-exists=.env src/server.js"</span>,
+  <span class="str">"dev"</span>: <span class="str">"node --env-file-if-exists=.env --watch src/server.js"</span>
+}</code></pre>
+    <p>The core inbound route stays tiny — <strong>acknowledge Meta within 5 seconds, then work asynchronously</strong>, or Meta retries and you double-process:</p>
+    <pre><code><span class="cmt">// server.js — the entry point</span>
+app.post(<span class="str">'/webhook'</span>, <span class="kw">async</span> (req, res) => {
+  res.sendStatus(200);                     <span class="cmt">// ack FIRST</span>
+  <span class="kw">try</span> {
+    <span class="kw">const</span> msg = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    <span class="kw">if</span> (msg) <span class="kw">await</span> handleInboundMessage(msg, { send: sendText, fetchMedia });
+  } <span class="kw">catch</span> (e) { console.error(<span class="str">'webhook error'</span>, e); }
+});</code></pre>
+  </section>
+
+  <section class="step" id="p2">
+    <h2><span class="num">2</span> Get your Claude API key</h2>
+    <p>At <code>console.anthropic.com</code>, create an API key and keep it for your <code>.env</code> (Part&nbsp;5). All model calls live in <code>brain.js</code> and share one grounding snapshot of household state (kids, members, open tasks) pulled fresh from Firestore on every call — that's what makes the memory feel shared.</p>
+    <p>A single extraction call turns a message into structured tasks:</p>
+    <pre><code><span class="cmt">// brain.js — extract tasks as strict JSON</span>
+<span class="kw">const</span> resp = <span class="kw">await</span> anthropic().messages.create({
+  model: <span class="str">'claude-sonnet-5'</span>,
+  thinking: { type: <span class="str">'disabled'</span> },   <span class="cmt">// ← see the gotcha below. Do not skip.</span>
+  max_tokens: 1024,
+  system: SYSTEM_PROMPT,
+  messages: [{ role: <span class="str">'user'</span>, content }]  <span class="cmt">// text and/or a base64 image</span>
+});</code></pre>
+    <div class="callout">
+      <span class="tag">Gotcha that will cost you an afternoon</span>
+      <p>Modern Claude models can emit a hidden <strong>thinking block by default</strong>. With small <code>max_tokens</code>, that block eats the whole budget and your call returns <em>no text</em> — the bot silently sends empty messages (which WhatsApp rejects). For these bounded formatting/extraction calls, pass <code>thinking: { type: 'disabled' }</code>. Always read the raw response blocks, not just the joined string, when a model "returns nothing."</p>
+    </div>
+  </section>
+
+  <section class="step" id="p3">
+    <h2><span class="num">3</span> Set up WhatsApp Cloud API</h2>
+    <p>This is the fiddliest part. Take it slowly.</p>
+    <h3>3a · Create the app and add WhatsApp</h3>
+    <ol>
+      <li>Go to <code>developers.facebook.com</code> → <b>My Apps</b> → <b>Create App</b> → type <b>Business</b>.</li>
+      <li>Add the <b>WhatsApp</b> product. Meta gives you a free <b>test phone number</b>.</li>
+      <li>From the WhatsApp → API Setup panel, copy two IDs you'll need: the <b>Phone Number ID</b> and the <b>WhatsApp Business Account (WABA) ID</b>.</li>
+    </ol>
+    <h3>3b · Allowlist your recipients</h3>
+    <p>A test number can only message numbers you explicitly add. In the API Setup panel, add each parent's WhatsApp number (with country code) to the recipient list and confirm the code they receive.</p>
+    <h3>3c · Get a token that never expires</h3>
+    <p>The temporary token in the dashboard dies in 24 hours — useless for a always-on bot. Create a permanent one:</p>
+    <ol>
+      <li>Business Settings → <b>Users → System Users</b> → create one (Admin).</li>
+      <li><b>Assign assets</b> → add your <b>WhatsApp Account</b> to that system user with full control. <em>(Skip this and the token is valid but powerless.)</em></li>
+      <li><b>Generate token</b> → select your app → scopes <code>whatsapp_business_messaging</code> and <code>whatsapp_business_management</code> → set expiry to <b>Never</b>.</li>
+    </ol>
+    <div class="callout">
+      <span class="tag">Verify the token actually works</span>
+      <p>Before moving on, confirm it can see your number:</p>
+      <pre style="margin:.6rem 0 0"><code>curl "https://graph.facebook.com/v21.0/&lt;PHONE_NUMBER_ID&gt;?access_token=&lt;TOKEN&gt;"</code></pre>
+    </div>
+  </section>
+
+  <section class="step" id="p4">
+    <h2><span class="num">4</span> Google Cloud project + Firestore</h2>
+    <p>Cloud Run's disk is <strong>ephemeral</strong> — anything written locally vanishes on redeploy. Use a real managed database. (Don't try to mount a bucket and run SQLite on it: SQLite's small out-of-order writes corrupt over a bucket's FUSE layer.)</p>
+    <pre><code>gcloud config set project <span class="pl">YOUR_PROJECT_ID</span>
+gcloud services enable run.googleapis.com firestore.googleapis.com \
+  cloudscheduler.googleapis.com cloudbuild.googleapis.com
+
+<span class="cmt"># Create Firestore in native mode (pick a region near you)</span>
+gcloud firestore databases create --location=<span class="pl">asia-southeast1</span></code></pre>
+    <p>Your <code>db.js</code> talks to Firestore through Application Default Credentials — on Cloud Run that's automatic, no key file. All queries are scoped by <code>household_id</code>, so there's never cross-household visibility.</p>
+  </section>
+
+  <section class="step" id="p5">
+    <h2><span class="num">5</span> Configure &amp; seed your household</h2>
+    <p>Create a <code>.env</code> (git-ignored — never commit it). <span class="pl">Highlighted</span> values are yours to fill in:</p>
+    <pre><code>ANTHROPIC_API_KEY=<span class="pl">sk-ant-...</span>
+WA_PHONE_NUMBER_ID=<span class="pl">1234567890</span>
+WA_TOKEN=<span class="pl">your-permanent-token</span>
+WA_VERIFY_TOKEN=<span class="pl">any-string-you-choose</span>     <span class="cmt"># used in Part 7</span>
+DIGEST_SECRET=<span class="pl">any-other-string</span>            <span class="cmt"># guards the cron route</span>
+
+HOUSEHOLD_ID=<span class="pl">smith</span>
+HOUSEHOLD_NAME=<span class="pl">Smith Family</span>
+HOUSEHOLD_TZ=<span class="pl">Asia/Singapore</span>
+DEFAULT_HOUSEHOLD=<span class="pl">smith</span>
+
+<span class="cmt"># Parent phone numbers = WhatsApp wa_id: country code + number, digits only, no '+'</span>
+PARENT1_PHONE=<span class="pl">6591234567</span>
+PARENT1_NAME=<span class="pl">Alex</span>
+PARENT2_PHONE=<span class="pl">6598765432</span>
+PARENT2_NAME=<span class="pl">Sam</span>
+
+KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code></pre>
+    <div class="callout">
+      <span class="tag">The identity rule that trips everyone</span>
+      <p>A member's phone number is the primary key and <strong>must match WhatsApp's <code>wa_id</code> exactly</strong> — country code, digits only, no <code>+</code>, spaces, or dashes. <code>seed.js</code> strips non-digits, but get this wrong and inbound messages won't match any member.</p>
+    </div>
+    <p><code>seed.js</code> runs on every boot (imported for its side effect in <code>server.js</code>) and idempotently creates the household, both parents, and the kids from these vars.</p>
+  </section>
+
+  <section class="step" id="p6">
+    <h2><span class="num">6</span> Deploy to Cloud Run</h2>
+    <p>Deploy straight from source. Keep <code>--min-instances 1</code> so the bot is always warm and never cold-starts past Meta's timeout:</p>
+    <pre><code>gcloud run deploy household-buddy --source . \
+  --region <span class="pl">asia-southeast1</span> --allow-unauthenticated --min-instances 1 \
+  --set-env-vars "$(grep -v '^#' .env | grep . | paste -sd, -)"</code></pre>
+    <p>When it finishes it prints a <b>Service URL</b> like <code>https://household-buddy-xxxx.run.app</code>. Save it — it's your webhook base. Sanity-check it:</p>
+    <pre><code>curl https://<span class="pl">your-service</span>.run.app/health   <span class="cmt"># → ok</span></code></pre>
+  </section>
+
+  <section class="step" id="p7">
+    <h2><span class="num">7</span> Connect the webhook</h2>
+    <p>Two separate wirings are needed — miss the second and messages arrive in Meta's dashboard but never reach your app.</p>
+    <h3>7a · Set the callback URL</h3>
+    <p>WhatsApp → Configuration → Edit. Callback URL = <code>https://your-service.run.app/webhook</code>; Verify token = the <code>WA_VERIFY_TOKEN</code> you chose. Your <code>GET /webhook</code> handles the handshake. Then <b>subscribe to the <code>messages</code> field</b>.</p>
+    <h3>7b · Subscribe your app to the WABA</h3>
+    <p>This is the step people miss. The app must be explicitly subscribed to the business account:</p>
+    <pre><code>curl -X POST \
+  "https://graph.facebook.com/v21.0/&lt;WABA_ID&gt;/subscribed_apps" \
+  -H "Authorization: Bearer &lt;TOKEN&gt;"</code></pre>
+    <p>Now message the bot from an allowlisted number. You should get a reply. 🎉 <em>(Remember: replies only work inside a 24-hour window after the user's last message — the next part fixes proactive delivery.)</em></p>
+  </section>
+
+  <section class="step" id="p8">
+    <h2><span class="num">8</span> The twice-daily digest</h2>
+    <p>A <code>POST /cron/digest</code> route (guarded by <code>DIGEST_SECRET</code>) pulls open tasks, splits them into <b>Today</b> and <b>Next 7 days</b>, and messages both parents. Two Cloud Scheduler jobs fire it:</p>
+    <pre><code>URL=https://<span class="pl">your-service</span>.run.app/cron/digest?household=<span class="pl">smith</span>
+<span class="kw">for</span> t in "morning 0 6" "evening 0 18"; <span class="kw">do</span> set -- $t
+  gcloud scheduler jobs create http buddy-digest-$1 \
+    --location=<span class="pl">asia-southeast1</span> --schedule="$2 $3 * * *" \
+    --time-zone=<span class="pl">Asia/Singapore</span> --http-method=POST --uri="$URL" \
+    --headers="x-digest-secret=<span class="pl">your-digest-secret</span>"
+<span class="kw">done</span></code></pre>
+
+    <div class="callout">
+      <span class="tag">The most important lesson in this whole guide</span>
+      <p>WhatsApp only lets a business send <strong>free-form</strong> text within <strong>24 hours of the user's last message</strong>. A scheduled digest is unprompted — so once your parents stop chatting for a day, every free-form digest is silently <em>accepted by the API but never delivered</em>. You cannot fix this with a keep-alive ping: only the <em>user</em> messaging <em>you</em> reopens the window. The real fix is an <strong>approved template</strong>, which delivers anytime.</p>
+    </div>
+
+    <h3>8a · Create &amp; submit the template</h3>
+    <p>Template variables can't contain newlines, so structure lives in the fixed body and each variable is one tidy line:</p>
+    <pre><code>curl -X POST "https://graph.facebook.com/v21.0/&lt;WABA_ID&gt;/message_templates" \
+ -H "Authorization: Bearer &lt;TOKEN&gt;" -H "Content-Type: application/json" \
+ -d '{
+   "name":"daily_digest","language":"en","category":"UTILITY",
+   "components":[{"type":"BODY",
+     "text":"🏠 Household digest — {{1}}\n\n📌 Today: {{2}}\n\n🗓️ Next 7 days: {{3}}",
+     "example":{"body_text":[["Thu 16 Jul","Pay fees (Leo) · Buy milk","Camp Mon · Fees Fri"]]}
+   }]
+ }'</code></pre>
+    <p>Utility templates usually clear review within the hour. Poll until <code>APPROVED</code>:</p>
+    <pre><code>curl "https://graph.facebook.com/v21.0/&lt;WABA_ID&gt;/message_templates?name=daily_digest&amp;access_token=&lt;TOKEN&gt;"</code></pre>
+
+    <h3>8b · Send the digest as that template</h3>
+    <pre><code><span class="cmt">// whatsapp.js — delivers regardless of the 24h window</span>
+<span class="kw">await</span> fetch(`${GRAPH}/${PHONE_NUMBER_ID}/messages`, {
+  method: <span class="str">'POST'</span>,
+  headers: { Authorization: `Bearer ${TOKEN}`, <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  body: JSON.stringify({
+    messaging_product: <span class="str">'whatsapp'</span>, to, type: <span class="str">'template'</span>,
+    template: { name: <span class="str">'daily_digest'</span>, language: { code: <span class="str">'en'</span> },
+      components: [{ type: <span class="str">'body'</span>, parameters: [date, today, week].map(t => ({ type: <span class="str">'text'</span>, text: t })) }] }
+  })
+});</code></pre>
+    <p>Build <code>date</code>, <code>today</code>, and <code>week</code> deterministically (no LLM) so they're always single-line and never empty — Meta rejects blank variables. Interactive chat keeps using free-form text; only the proactive digest needs the template.</p>
+  </section>
+
+  <section class="step" id="p9">
+    <h2><span class="num">9</span> Mine school email <span style="font-family:var(--sans);font-size:.8rem;color:var(--muted);font-weight:600;">— optional</span></h2>
+    <p>Schools send fees, forms, and dates by email. Rather than wrestle Gmail's OAuth verification, use a tiny <strong>Google Apps Script</strong> that runs inside your own account on a weekly trigger and POSTs new school mail to a secured <code>/ingest/email</code> endpoint.</p>
+    <pre><code><span class="cmt">// Apps Script (script.google.com) — runs weekly, AS you, no OAuth app to verify</span>
+<span class="kw">function</span> scanSchoolMail() {
+  <span class="kw">const</span> q = <span class="str">'(from:school.edu OR "Fee Invoice") newer_than:8d -label:buddy-done'</span>;
+  <span class="kw">for</span> (<span class="kw">const</span> thread <span class="kw">of</span> GmailApp.search(q, 0, 50)) {
+    <span class="kw">const</span> m = thread.getMessages().pop();
+    UrlFetchApp.fetch(<span class="str">'https://your-service.run.app/ingest/email'</span>, {
+      method: <span class="str">'post'</span>, contentType: <span class="str">'application/json'</span>,
+      headers: { <span class="str">'x-ingest-secret'</span>: SECRET },
+      payload: JSON.stringify({ messageId: m.getId(), from: m.getFrom(),
+        subject: m.getSubject(), body: m.getPlainBody() })
+    });
+    thread.addLabel(doneLabel);
+  }
+}</code></pre>
+    <p>Two things that matter more than you'd expect:</p>
+    <ul>
+      <li><b>Dedup before the model.</b> Record each Gmail <code>messageId</code> you've handled and skip it — so Claude only ever runs on genuinely new mail.</li>
+      <li><b>Invoices often don't come from the school's domain.</b> Many schools bill through a vendor (e.g. NetSuite). A naïve <code>from:school.edu</code> filter misses exactly the emails you most want — match a subject phrase too.</li>
+    </ul>
+    <p>Set the weekly trigger once (Triggers → time-driven → weekly), and set the Apps Script project's timezone so "Sunday morning" means your morning.</p>
+  </section>
+
+  <section>
+    <p class="sec-eyebrow">// keep these taped to your monitor</p>
+    <h2>The traps, collected</h2>
+    <ul>
+      <li><b>Disable thinking</b> on bounded Claude calls, or they return empty text.</li>
+      <li><b>Proactive messages need a template</b> — the 24-hour window blocks free-form, and no self-ping reopens it.</li>
+      <li><b>Assign the WhatsApp asset</b> to your system user, or the permanent token is powerless.</li>
+      <li><b>Subscribe the app to the WABA</b> (<code>/subscribed_apps</code>) — the webhook field alone isn't enough.</li>
+      <li><b>Phone numbers must match <code>wa_id</code></b> exactly: country code, digits only, no <code>+</code>.</li>
+      <li><b>Ack the webhook with 200 first</b>, then process — or Meta retries and you double-file.</li>
+      <li><b>Cloud Run storage is ephemeral</b> — use Firestore, not a file on a mounted bucket.</li>
+      <li><b>The test number is dev-only</b> (allowlist + limits). For production, register a real business number — the same template code works.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="sec-eyebrow">// what it costs</p>
+    <h2>Running costs</h2>
+    <table class="tbl">
+      <tr><th>Service</th><th>Why</th><th>Ballpark</th></tr>
+      <tr><td>Cloud Run</td><td>always-warm instance (min-instances 1)</td><td>~$4/mo</td></tr>
+      <tr><td>Firestore</td><td>tiny reads/writes</td><td>~free tier</td></tr>
+      <tr><td>Cloud Scheduler</td><td>2 jobs</td><td>~free tier</td></tr>
+      <tr><td>Claude API</td><td>a few calls per message</td><td>cents/day</td></tr>
+      <tr><td>WhatsApp</td><td>utility templates, low volume</td><td>~free tier</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <p class="sec-eyebrow">// make it yours</p>
+    <h2>Where to take it next</h2>
+    <p>Owner assignment so the digest says "you're on pickup." A weekly look-ahead beside the daily one. More inbound sources — the Apps Script pattern generalises to anything that can POST a payload. But the core above is a complete, working assistant for a two-parent household. Build it, message it, and stop forgetting things.</p>
+  </section>
+
+  <hr class="soft" />
+  <footer>
+    <p>Household Buddy — a small Node + Express app: WhatsApp Cloud API in front, Claude for understanding, Firestore for memory, Cloud Run underneath. Never commit your <code>.env</code>; rotate any key you paste anywhere. Placeholders in this guide (<span class="pl">like this</span>) are yours to replace.</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
