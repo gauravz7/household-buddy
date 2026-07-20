@@ -377,6 +377,57 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
     <p>Set the weekly trigger once (Triggers → time-driven → weekly), and set the Apps Script project's timezone so "Sunday morning" means your morning.</p>
   </section>
 
+  <section id="brain">
+    <p class="sec-eyebrow">// under the hood</p>
+    <h2>How the bot thinks: no agent, just prompts + a state machine</h2>
+    <p>There's <strong>no autonomous agent</strong> here — no tool-calling loop that decides its own next step, no multi-agent framework. The model is used as a <strong>stateless function</strong> (text in → JSON or a reply out), and ordinary JavaScript in <code>handler.js</code> decides which prompt to call. That keeps the bot predictable, cheap, and testable.</p>
+    <p>Every inbound message runs the same short decision tree, with the conversation's <em>phase</em> saved in Firestore between messages:</p>
+    <pre><code>message in
+ → conversation in progress?
+     • "clarifying" → advanceClarification   <span class="cmt">// merge answer; maybe ask once more</span>
+     • "confirming" → resolveConfirmation    <span class="cmt">// yes / no / unclear</span>
+ → else proposeFromMessage:
+     • remove / done request → update tasks, read back to both parents
+     • vague new task        → ask ONE question    <span class="cmt">(→ clarifying)</span>
+     • clear new task        → composeConfirmation  <span class="cmt">(→ confirming)</span>
+     • a question / chit-chat → composeReply</code></pre>
+    <p>Two other paths run independently and are just as un-agentic: the <b>twice-daily digest</b> (a scheduled cron route) and the <b>weekly school-email scan</b> (its own endpoint). Each is a single prompt call wrapped in a route.</p>
+
+    <h3>The eight prompts</h3>
+    <p>All the "intelligence" is a set of system prompts in <code>brain.js</code>, one per call. Every one is <strong>grounded the same way</strong>: right before the call, a fresh snapshot of household state — kids, members, open tasks — plus <code>TODAY</code> and the timezone is appended. That shared snapshot is both what makes the memory feel shared and the guardrail against invented tasks.</p>
+    <p><strong>Understanding calls</strong> — return strict JSON:</p>
+    <ul>
+      <li><b>Propose</b> — the main brain: extract new tasks to add, <em>and</em> detect remove/done requests against the open list.</li>
+      <li><b>Decide</b> — classify a confirmation reply as confirm / reject / unclear.</li>
+      <li><b>Clarify</b> — merge the parent's answer into the draft; decide if one more question is warranted (capped at two).</li>
+      <li><b>School</b> — from one forwarded email, extract only real actions; ignore newsletters and app-notification digests.</li>
+    </ul>
+    <p><strong>Voice calls</strong> — return prose in the "Buddy" persona:</p>
+    <ul>
+      <li><b>Reply</b> — conversational answers, grounded in shared state + recent messages.</li>
+      <li><b>Confirm</b> — "I think this photo is a birthday invite — file it? (yes/no)".</li>
+      <li><b>Read-back</b> — after filing, repeat exactly what was saved so mistakes get caught.</li>
+      <li><b>Digest</b> — the free-form daily summary (the template version uses a deterministic builder, no model at all).</li>
+    </ul>
+
+    <p>The extraction prompt is the load-bearing one — its rules, roughly verbatim:</p>
+    <pre><code>Return ONLY a JSON object, no prose, no markdown fences:
+{ "tasks":[…], "needs_clarification":bool, "question":str|null,
+  "remove_titles":[…], "done_titles":[…] }
+
+- Only genuinely actionable NEW items in "tasks".
+- If the message is a QUESTION or chit-chat, return everything empty.
+  Never invent a task from a question.
+- REMOVAL/COMPLETION: only on an explicit remove/delete/done command,
+  copy the matching open task's title VERBATIM. Never guess.
+- Ask ONE clarifying question only when a task is too vague to be useful.</code></pre>
+
+    <div class="callout">
+      <span class="tag">Grounding is the whole trick</span>
+      <p>None of these prompts are clever on their own. What makes answers correct is that each is handed your <em>actual</em> current list and today's date at call time — so "what's on this week?" and "remove the milk" resolve against real state, not the model's imagination.</p>
+    </div>
+  </section>
+
   <section>
     <p class="sec-eyebrow">// keep these taped to your monitor</p>
     <h2>The traps, collected</h2>
