@@ -104,13 +104,13 @@
 <div class="wrap">
 
   <header class="mast">
-    <p class="eyebrow">Hands-on Guide · WhatsApp + Claude + Google Cloud</p>
+    <p class="eyebrow">Hands-on Guide · WhatsApp + Gemini + Google Cloud</p>
     <h1>Build your own Household Buddy</h1>
     <p class="dek">A WhatsApp assistant that turns your family's messages, photos, and school emails into one shared to-do list — and reminds you twice a day. This is the complete, step-by-step build.</p>
     <div class="meta">
       <span>Full setup ≈ 2–3 hours</span><span>·</span>
       <span>~$5/month to run</span>
-      <span class="chip">Node 20+</span><span class="chip">Claude</span><span class="chip">Firestore</span><span class="chip">Cloud Run</span>
+      <span class="chip">Node 20+</span><span class="chip">Gemini</span><span class="chip">Firestore</span><span class="chip">Cloud Run</span>
     </div>
   </header>
 
@@ -134,13 +134,13 @@
       <div class="arrow">↓</div>
       <div class="node accent"><span class="nt">Express app on Cloud Run</span><span class="nd">acks in &lt;5s, then processes asynchronously</span></div>
       <div class="arrow">↓</div>
-      <div class="node"><span class="nt">Claude — understand</span><span class="nd">text or photo → add / remove / answer, grounded in the shared state</span></div>
+      <div class="node"><span class="nt">Gemini — understand</span><span class="nd">text or photo → add / remove / answer, grounded in the shared state</span></div>
       <div class="arrow">↓</div>
       <div class="node accent"><span class="nt">Firestore — shared memory</span><span class="nd">tasks, members, kids, conversation state, keyed by household</span></div>
       <div class="arrow">↓</div>
       <div class="node"><span class="nt">Reply → both parents</span><span class="nd">plus a twice-daily digest via an approved template</span></div>
     </div>
-    <p>The whole app is a handful of small files — one Express server, one module for Claude calls, one for Firestore, one thin WhatsApp wrapper, one message handler, and a boot-time seed. Each has a single job.</p>
+    <p>The whole app is a handful of small files — one Express server, one module for Gemini calls, one for Firestore, one thin WhatsApp wrapper, one message handler, and a boot-time seed. Each has a single job.</p>
   </section>
 
   <section>
@@ -148,7 +148,7 @@
     <h2>Prerequisites</h2>
     <ul class="check">
       <li><span class="box">☐</span><div><b>A Meta (Facebook) account</b> — free. You'll create a developer app with the WhatsApp product. A Meta-provided test number is fine to start.</div></li>
-      <li><span class="box">☐</span><div><b>An Anthropic API key</b> — from <code>console.anthropic.com</code>. Pay-as-you-go; this app costs cents/day.</div></li>
+      <li><span class="box">☐</span><div><b>A Gemini API key</b> — from <code>aistudio.google.com</code> (Google AI Studio). Pay-as-you-go; this app costs cents/day.</div></li>
       <li><span class="box">☐</span><div><b>A Google Cloud project with billing enabled</b> — for Firestore, Cloud Run, and Cloud Scheduler. Comfortably within a few dollars/month.</div></li>
       <li><span class="box">☐</span><div><b>Local tools</b> — Node 20+, the <code>gcloud</code> CLI (authenticated with <code>gcloud auth login</code>), and <code>git</code>.</div></li>
     </ul>
@@ -158,7 +158,7 @@
     <div class="th">The build, in order</div>
     <ol>
       <li><a href="#p1">Scaffold the app</a></li>
-      <li><a href="#p2">Get your Claude API key</a></li>
+      <li><a href="#p2">Get your Gemini API key</a></li>
       <li><a href="#p3">Set up WhatsApp Cloud API</a></li>
       <li><a href="#p4">Create the Google Cloud project + Firestore</a></li>
       <li><a href="#p5">Configure &amp; seed your household</a></li>
@@ -175,13 +175,13 @@
     <pre><code>mkdir household-buddy &amp;&amp; cd household-buddy
 npm init -y
 npm pkg set type=module
-npm install express @anthropic-ai/sdk @google-cloud/firestore luxon</code></pre>
+npm install express @google/genai @google-cloud/firestore luxon</code></pre>
     <p>Organise the source into focused files under <code>src/</code>:</p>
     <table class="tbl">
       <tr><th>File</th><th>Its one job</th></tr>
       <tr><td><code>server.js</code></td><td>Express app: the <code>/webhook</code> and <code>/cron/digest</code> routes</td></tr>
       <tr><td><code>handler.js</code></td><td>What to do with an inbound message (the conversation logic)</td></tr>
-      <tr><td><code>brain.js</code></td><td>Every Claude call — extract tasks, reply, build the digest</td></tr>
+      <tr><td><code>brain.js</code></td><td>Every Gemini call — extract tasks, reply, build the digest</td></tr>
       <tr><td><code>db.js</code></td><td>Firestore reads/writes, all scoped by household</td></tr>
       <tr><td><code>whatsapp.js</code></td><td>Thin wrapper over Meta's Graph API (send text, send template, fetch media)</td></tr>
       <tr><td><code>seed.js</code></td><td>Creates your household, parents, and kids on first boot</td></tr>
@@ -203,20 +203,23 @@ app.post(<span class="str">'/webhook'</span>, <span class="kw">async</span> (req
   </section>
 
   <section class="step" id="p2">
-    <h2><span class="num">2</span> Get your Claude API key</h2>
-    <p>At <code>console.anthropic.com</code>, create an API key and keep it for your <code>.env</code> (Part&nbsp;5). All model calls live in <code>brain.js</code> and share one grounding snapshot of household state (kids, members, open tasks) pulled fresh from Firestore on every call — that's what makes the memory feel shared.</p>
+    <h2><span class="num">2</span> Get your Gemini API key</h2>
+    <p>At <code>aistudio.google.com</code> (Google AI Studio), create an API key and keep it for your <code>.env</code> (Part&nbsp;5). All model calls live in <code>brain.js</code> and share one grounding snapshot of household state (kids, members, open tasks) pulled fresh from Firestore on every call — that's what makes the memory feel shared.</p>
     <p>A single extraction call turns a message into structured tasks:</p>
     <pre><code><span class="cmt">// brain.js — extract tasks as strict JSON</span>
-<span class="kw">const</span> resp = <span class="kw">await</span> anthropic().messages.create({
-  model: <span class="str">'claude-sonnet-5'</span>,
-  thinking: { type: <span class="str">'disabled'</span> },   <span class="cmt">// ← see the gotcha below. Do not skip.</span>
-  max_tokens: 1024,
-  system: SYSTEM_PROMPT,
-  messages: [{ role: <span class="str">'user'</span>, content }]  <span class="cmt">// text and/or a base64 image</span>
-});</code></pre>
+<span class="kw">const</span> resp = <span class="kw">await</span> genai.models.generateContent({
+  model: <span class="str">'gemini-3.1-flash-lite'</span>,
+  contents,                                  <span class="cmt">// text and/or a base64 image part</span>
+  config: {
+    systemInstruction: SYSTEM_PROMPT,
+    thinkingConfig: { thinkingBudget: <span class="kw">0</span> },   <span class="cmt">// ← see the gotcha below. Do not skip.</span>
+    responseMimeType: <span class="str">'application/json'</span>       <span class="cmt">// enforce clean JSON</span>
+  }
+});
+<span class="kw">const</span> text = resp.text;</code></pre>
     <div class="callout">
       <span class="tag">Gotcha that will cost you an afternoon</span>
-      <p>Modern Claude models can emit a hidden <strong>thinking block by default</strong>. With small <code>max_tokens</code>, that block eats the whole budget and your call returns <em>no text</em> — the bot silently sends empty messages (which WhatsApp rejects). For these bounded formatting/extraction calls, pass <code>thinking: { type: 'disabled' }</code>. Always read the raw response blocks, not just the joined string, when a model "returns nothing."</p>
+      <p>Gemini models also emit a hidden <strong>thinking block by default</strong>. On these bounded formatting/extraction calls it just adds latency and can crowd a tight output budget, so disable it with <code>thinkingConfig: { thinkingBudget: 0 }</code> on a Flash-class model. (The same trap bit this project on a previous model, where it left calls returning <em>no text</em> at all — worth checking on any LLM you swap in.)</p>
     </div>
   </section>
 
@@ -260,7 +263,7 @@ gcloud firestore databases create --location=<span class="pl">asia-southeast1</s
   <section class="step" id="p5">
     <h2><span class="num">5</span> Configure &amp; seed your household</h2>
     <p>Create a <code>.env</code> (git-ignored — never commit it). <span class="pl">Highlighted</span> values are yours to fill in:</p>
-    <pre><code>ANTHROPIC_API_KEY=<span class="pl">sk-ant-...</span>
+    <pre><code>GEMINI_API_KEY=<span class="pl">your-gemini-key</span>
 WA_PHONE_NUMBER_ID=<span class="pl">1234567890</span>
 WA_TOKEN=<span class="pl">your-permanent-token</span>
 WA_VERIFY_TOKEN=<span class="pl">any-string-you-choose</span>     <span class="cmt"># used in Part 7</span>
@@ -371,7 +374,7 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
 }</code></pre>
     <p>Two things that matter more than you'd expect:</p>
     <ul>
-      <li><b>Dedup before the model.</b> Record each Gmail <code>messageId</code> you've handled and skip it — so Claude only ever runs on genuinely new mail.</li>
+      <li><b>Dedup before the model.</b> Record each Gmail <code>messageId</code> you've handled and skip it — so the model only ever runs on genuinely new mail.</li>
       <li><b>Invoices often don't come from the school's domain.</b> Many schools bill through a vendor (e.g. NetSuite). A naïve <code>from:school.edu</code> filter misses exactly the emails you most want — match a subject phrase too.</li>
     </ul>
     <p>Set the weekly trigger once (Triggers → time-driven → weekly), and set the Apps Script project's timezone so "Sunday morning" means your morning.</p>
@@ -432,7 +435,7 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
     <p class="sec-eyebrow">// keep these taped to your monitor</p>
     <h2>The traps, collected</h2>
     <ul>
-      <li><b>Disable thinking</b> on bounded Claude calls, or they return empty text.</li>
+      <li><b>Disable thinking</b> on bounded model calls, or they return empty text.</li>
       <li><b>Proactive messages need a template</b> — the 24-hour window blocks free-form, and no self-ping reopens it.</li>
       <li><b>Assign the WhatsApp asset</b> to your system user, or the permanent token is powerless.</li>
       <li><b>Subscribe the app to the WABA</b> (<code>/subscribed_apps</code>) — the webhook field alone isn't enough.</li>
@@ -451,7 +454,7 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
       <tr><td>Cloud Run</td><td>always-warm instance (min-instances 1)</td><td>~$4/mo</td></tr>
       <tr><td>Firestore</td><td>tiny reads/writes</td><td>~free tier</td></tr>
       <tr><td>Cloud Scheduler</td><td>2 jobs</td><td>~free tier</td></tr>
-      <tr><td>Claude API</td><td>a few calls per message</td><td>cents/day</td></tr>
+      <tr><td>Gemini API</td><td>a few calls per message</td><td>cents/day</td></tr>
       <tr><td>WhatsApp</td><td>utility templates, low volume</td><td>~free tier</td></tr>
     </table>
   </section>
@@ -464,7 +467,7 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
 
   <hr class="soft" />
   <footer>
-    <p>Household Buddy — a small Node + Express app: WhatsApp Cloud API in front, Claude for understanding, Firestore for memory, Cloud Run underneath. Never commit your <code>.env</code>; rotate any key you paste anywhere. Placeholders in this guide (<span class="pl">like this</span>) are yours to replace.</p>
+    <p>Household Buddy — a small Node + Express app: WhatsApp Cloud API in front, Gemini for understanding, Firestore for memory, Cloud Run underneath. Never commit your <code>.env</code>; rotate any key you paste anywhere. Placeholders in this guide (<span class="pl">like this</span>) are yours to replace.</p>
   </footer>
 
 </div>
