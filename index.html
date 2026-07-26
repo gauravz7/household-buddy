@@ -112,7 +112,7 @@
     <p class="dek">A WhatsApp assistant that turns your family's messages, photos, and school emails into one shared to-do list — and reminds you twice a day. This is the complete, step-by-step build.</p>
     <div class="meta">
       <span>Full setup ≈ 2–3 hours</span><span>·</span>
-      <span>~$5/month to run</span>
+      <span>~10¢/month to run</span>
       <span class="chip">Node 20+</span><span class="chip">Gemini</span><span class="chip">Firestore</span><span class="chip">Cloud Run</span>
     </div>
   </header>
@@ -158,7 +158,7 @@
     <ul class="check">
       <li><span class="box">☐</span><div><b>A Meta (Facebook) account</b> — free. You'll create a developer app with the WhatsApp product. A Meta-provided test number is fine to start.</div></li>
       <li><span class="box">☐</span><div><b>A Gemini API key</b> — from <code>aistudio.google.com</code> (Google AI Studio). Pay-as-you-go; this app costs cents/day.</div></li>
-      <li><span class="box">☐</span><div><b>A Google Cloud project with billing enabled</b> — for Firestore, Cloud Run, and Cloud Scheduler. Comfortably within a few dollars/month.</div></li>
+      <li><span class="box">☐</span><div><b>A Google Cloud project with billing enabled</b> — for Firestore, Cloud Run, and Cloud Scheduler. Comfortably within the free tier — see the cost breakdown below.</div></li>
       <li><span class="box">☐</span><div><b>Local tools</b> — Node 20+, the <code>gcloud</code> CLI (authenticated with <code>gcloud auth login</code>), and <code>git</code>.</div></li>
     </ul>
   </section>
@@ -299,10 +299,11 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
 
   <section class="step" id="p6">
     <h2><span class="num">6</span> Deploy to Cloud Run</h2>
-    <p>Deploy straight from source. Keep <code>--min-instances 1</code> so the bot is always warm and never cold-starts past Meta's timeout:</p>
+    <p>Deploy straight from source. Leave min-instances at <b>0</b> (the default) so it <b>scales to zero</b> when idle — that's what keeps it essentially free:</p>
     <pre><code>gcloud run deploy household-buddy --source . \
-  --region <span class="pl">asia-southeast1</span> --allow-unauthenticated --min-instances 1 \
+  --region <span class="pl">asia-southeast1</span> --allow-unauthenticated \
   --set-env-vars "$(grep -v '^#' .env | grep . | paste -sd, -)"</code></pre>
+    <p>Scale-to-zero adds a ~1–3s cold start on the first message after a quiet spell — fine here, since the app acks Meta's webhook <em>before</em> doing any work. If you'd rather never cold-start, add <code>--min-instances 1</code> — but that keeps an instance running 24/7 and is what turns a few cents into a few dollars a month.</p>
     <p>When it finishes it prints a <b>Service URL</b> like <code>https://household-buddy-xxxx.run.app</code>. Save it — it's your webhook base. Sanity-check it:</p>
     <pre><code>curl https://<span class="pl">your-service</span>.run.app/health   <span class="cmt"># → ok</span></code></pre>
   </section>
@@ -458,14 +459,17 @@ KIDS=<span class="pl">Mia:Greenwood School;Leo:Sunnydale Preschool</span></code>
   <section>
     <p class="sec-eyebrow">// what it costs</p>
     <h2>Running costs</h2>
+    <p>These are the real numbers from a live household of ~3 messages a day. Everything sits inside a free tier except a few cents of Gemini — the one lever that used to cost real money (an always-warm Cloud Run instance) is gone once you scale to zero.</p>
     <table class="tbl">
-      <tr><th>Service</th><th>Why</th><th>Ballpark</th></tr>
-      <tr><td>Cloud Run</td><td>always-warm instance (min-instances 1)</td><td>~$4/mo</td></tr>
-      <tr><td>Firestore</td><td>tiny reads/writes</td><td>~free tier</td></tr>
-      <tr><td>Cloud Scheduler</td><td>2 jobs</td><td>~free tier</td></tr>
-      <tr><td>Gemini API</td><td>a few calls per message</td><td>cents/day</td></tr>
-      <tr><td>WhatsApp</td><td>utility templates, low volume</td><td>~free tier</td></tr>
+      <tr><th>Service</th><th>Usage</th><th>Cost</th></tr>
+      <tr><td>Cloud Run</td><td>scale-to-zero, ~20 requests/day</td><td>$0 · free tier</td></tr>
+      <tr><td>Gemini API</td><td>~260 flash-lite calls/mo</td><td>~$0.10</td></tr>
+      <tr><td>Firestore</td><td>a few hundred reads/writes a day</td><td>$0 · free tier</td></tr>
+      <tr><td>Cloud Scheduler</td><td>2 digest jobs</td><td>$0 · free tier</td></tr>
+      <tr><td>WhatsApp</td><td>low volume</td><td>$0 · free tier</td></tr>
+      <tr><td><b>All-in</b></td><td></td><td><b>≈ $0.10 / month</b></td></tr>
     </table>
+    <p>The only cost that grows with use is Gemini, and it grows slowly — even at 10× this volume you're around a dollar or two a month.</p>
   </section>
 
   <section>
